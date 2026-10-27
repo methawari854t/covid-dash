@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
-<head>https://github.com/methawari854t/covid-dash/blob/2d933ffec291f404502ed2add29478bfa9c9b6f9/IMG_4204.jpeg
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบเฝ้าระวังทางระบาดวิทยา (Epidemiological Dashboard)</title>
@@ -91,7 +91,8 @@
                 </div>
             </div>
             
-            <div class="flex items-center space-x-2">
+            <!-- ส่วนควบคุมทางขวา (ปุ่มธีม, รีเฟรช และเพิ่มรูปโปรไฟล์นักศึกษา) -->
+            <div class="flex items-center space-x-3">
                 <button id="toggle-theme" onclick="toggleTheme()" class="p-2.5 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-md transition-all text-sm font-medium flex items-center gap-1.5" title="สลับโหมดมืด/สว่าง">
                     <i id="theme-icon" class="fa-solid fa-moon"></i>
                 </button>
@@ -99,6 +100,13 @@
                     <i class="fa-solid fa-rotate-right" id="refresh-icon"></i>
                     <span>รีเฟรชข้อมูล</span>
                 </button>
+
+                <!-- เพิ่มรูปโปรไฟล์นักศึกษาที่มุมขวาบน -->
+                <div class="flex items-center pl-2 border-l border-white/20 space-x-2">
+                    <img src="https://raw.githubusercontent.com/methawari854t/covid-dash/main/IMG_4204.jpeg" 
+                         alt="รูปโปรไฟล์นักศึกษา" 
+                         class="w-10 h-10 rounded-full object-cover border-2 border-cyan-300 shadow-md">
+                </div>
             </div>
         </div>
     </header>
@@ -503,7 +511,6 @@
         function validateCSVData(data) {
             if (!data || data.length === 0) return false;
             const keys = Object.keys(data[0]).map(k => k.toLowerCase());
-            // Look for basic keywords
             return keys.some(k => k.includes('date') || k.includes('วัน') || k.includes('province') || k.includes('จังหวัด') || k.includes('case'));
         }
 
@@ -512,7 +519,6 @@
             return parsedArray.map((row, index) => {
                 const keys = Object.keys(row);
                 
-                // Helper to find key containing string
                 const findVal = (terms) => {
                     const key = keys.find(k => terms.some(t => k.toLowerCase().includes(t)));
                     return key ? row[key] : null;
@@ -529,7 +535,6 @@
                 let lat = parseFloat(findVal(['lat', 'ละติจูด']));
                 let lng = parseFloat(findVal(['lng', 'lon', 'ลองจิจูด']));
 
-                // Default location fallback if coordinates missing (Centered around Thailand regional centers)
                 if (isNaN(lat) || isNaN(lng)) {
                     const coordsMap = {
                         'กรุงเทพมหานคร': [13.7563, 100.5018],
@@ -588,7 +593,6 @@
             descEl.innerText = desc;
         }
 
-        // Populate Dropdown Filter Options
         function populateFilterOptions() {
             const provinceSelect = document.getElementById('filter-province');
             const diseaseSelect = document.getElementById('filter-disease');
@@ -607,7 +611,6 @@
             });
         }
 
-        // Filter Logic
         function applyFilters() {
             const selectedProvince = document.getElementById('filter-province').value;
             const selectedDisease = document.getElementById('filter-disease').value;
@@ -642,7 +645,6 @@
             applyFilters();
         }
 
-        // Update Key Performance Indicators Cards
         function updateKPIs() {
             const total = filteredData.length;
             const active = filteredData.filter(d => d.status.toLowerCase() === 'active').length;
@@ -654,7 +656,6 @@
             const activePercent = total > 0 ? ((active / total) * 100).toFixed(1) : 0;
             document.getElementById('kpi-active-percent').innerText = `${activePercent}% ของเคสทั้งหมด`;
 
-            // Calculate Top Affected Area
             const provinceCounts = {};
             filteredData.forEach(d => {
                 provinceCounts[d.province] = (provinceCounts[d.province] || 0) + 1;
@@ -672,12 +673,10 @@
             document.getElementById('kpi-top-area').innerText = topArea;
             document.getElementById('kpi-top-area-cases').innerText = `${topCount} เคส`;
 
-            // CFR (Case Fatality Rate)
             const cfr = total > 0 ? ((deceased / total) * 100).toFixed(1) : '0.0';
             document.getElementById('kpi-cfr').innerText = `${cfr} %`;
             document.getElementById('kpi-deceased-count').innerText = `เสียชีวิต: ${deceased} ราย`;
 
-            // Date Range Label
             if (filteredData.length > 0) {
                 const dates = filteredData.map(d => d.onset_date).sort();
                 document.getElementById('kpi-date-range').innerText = `ข้อมูลตั้งแต่ ${dates[0]} ถึง ${dates[dates.length - 1]}`;
@@ -686,7 +685,6 @@
             }
         }
 
-        // Switch Epidemic Curve Chart Aggregation Mode
         function switchChartMode(mode) {
             currentChartMode = mode;
             const btnDaily = document.getElementById('btn-chart-daily');
@@ -703,18 +701,15 @@
             renderEpidemicCurve();
         }
 
-        // Render Chart.js Epidemic Curve
         function renderEpidemicCurve() {
             const ctx = document.getElementById('epiCurveChart').getContext('2d');
             document.getElementById('chart-total-label').innerText = `แสดงทั้งหมด ${filteredData.length} เคส`;
 
-            // Group cases by Date or Week
             const countsMap = {};
             
             filteredData.forEach(item => {
                 let key = item.onset_date || 'Unspecified';
                 if (currentChartMode === 'weekly' && key !== 'Unspecified') {
-                    // Extract week format YYYY-Wxx
                     const d = new Date(key);
                     if (!isNaN(d.getTime())) {
                         const firstJan = new Date(d.getFullYear(), 0, 1);
@@ -725,7 +720,6 @@
                 countsMap[key] = (countsMap[key] || 0) + 1;
             });
 
-            // Sort dates chronologically
             const sortedKeys = Object.keys(countsMap).sort();
             const dataValues = sortedKeys.map(k => countsMap[k]);
 
@@ -775,7 +769,6 @@
             });
         }
 
-        // Render Leaflet Map Markers
         function renderMapMarkers() {
             if (!mapInstance || !mapMarkersGroup) return;
 
@@ -786,19 +779,18 @@
                 if (!isNaN(item.latitude) && !isNaN(item.longitude)) {
                     bounds.push([item.latitude, item.longitude]);
 
-                    // Determine marker color based on status
-                    let color = '#0284c7'; // default blue
+                    let color = '#0284c7';
                     let fillColor = '#38bdf8';
                     const st = item.status.toLowerCase();
 
                     if (st === 'active') {
-                        color = '#e11d48'; // Red
+                        color = '#e11d48';
                         fillColor = '#f43f5e';
                     } else if (st === 'recovered') {
-                        color = '#059669'; // Green
+                        color = '#059669';
                         fillColor = '#10b981';
                     } else if (st === 'deceased') {
-                        color = '#334155'; // Dark Slate
+                        color = '#334155';
                         fillColor = '#475569';
                     }
 
@@ -810,7 +802,6 @@
                         fillOpacity: 0.85
                     });
 
-                    // Custom Leaflet Popup Content
                     const popupHTML = `
                         <div class="font-sans text-xs p-1">
                             <div class="flex items-center justify-between gap-2 border-b pb-1.5 mb-1.5">
@@ -832,7 +823,6 @@
                 }
             });
 
-            // Auto-fit map boundaries to visible markers
             if (bounds.length > 0) {
                 mapInstance.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
             } else {
@@ -840,7 +830,6 @@
             }
         }
 
-        // Render Data Table
         function renderDataTable() {
             const tbody = document.getElementById('case-table-body');
             const countLabel = document.getElementById('table-count');
@@ -860,7 +849,7 @@
             }
 
             let html = '';
-            filteredData.slice(0, 50).forEach(item => { // Render first 50 items for speed
+            filteredData.slice(0, 50).forEach(item => {
                 const st = item.status.toLowerCase();
                 let statusBadge = '';
 
@@ -897,11 +886,10 @@
             tbody.innerHTML = html;
         }
 
-        // Initialize Web Application on Window Load
         window.addEventListener('DOMContentLoaded', () => {
             initMap();
             fetchData();
         });
     </script>
-</body>https://github.com/methawari854t/covid-dash/blob/88130e88c3307ae88833f5c6c8a846b1cd135150/IMG_4204.jpeg
+</body>
 </html>
